@@ -328,12 +328,10 @@ if __name__ == '__main__':
     logger.info(config.__dict__)
     torch.manual_seed(seed=config.seed)
 
-    CR_ini = np.array([1]) / 100  # %, CR of other methods
-    # CR_ini = np.array([1, 2, 3, 4, 5]) / 100  # %, CR of other methods
+    CR_ini = np.array([1, 2, 3, 4, 5]) / 100  # %, CR of other methods
     # CR_ini = np.array([4, 4, 4, 4]) / 100  # %, CR of other methods
 
-    SNR_dB = np.array([10])
-    # SNR_dB = np.array([10, 10, 10, 10, 10])
+    SNR_dB = np.array([10, 10, 10, 10, 10])
     # SNR_dB = np.array([2, 4, 6, 8])
     SNR = 10 ** (SNR_dB / 10)
 
