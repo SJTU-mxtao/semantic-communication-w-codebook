@@ -11,6 +11,9 @@ Recently, codebook-assisted semantic communications have been developed to bridg
 ![ ](./figure/NN.png)
 >  Illustration of the proposed semantic coder structure.
 
+![ ](./figure/WITT.png)
+>  Illustration of the SwinJSCC part (from the [paper](https://arxiv.org/abs/2211.00937) "WITT: A Wireless Image Transmission Transformer For Semantic Communications").
+
 
 # Prerequites
 * [Python 3.8]
