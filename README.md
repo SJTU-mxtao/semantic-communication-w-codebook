@@ -97,7 +97,7 @@ $ python JPEG2000_save.py
 
 # Citation
 
-If you find this work useful for your research, please cite:
+Please use the following BibTeX citation if you use this repository in your work:
 
 xxxxx
 
