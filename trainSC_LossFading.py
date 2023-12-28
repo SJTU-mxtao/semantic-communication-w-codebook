@@ -14,17 +14,16 @@ import pdb
 os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 import numpy as np
 import math
-# import imageio
 
 parser = argparse.ArgumentParser(description='WITT')
 parser.add_argument('--training', action='store_true',
                     help='training or testing')
-parser.add_argument('--trainset', type=str, default='CIFAR10',
-                    choices=['CIFAR10', 'DIV2K', 'STL10'],
+parser.add_argument('--trainset', type=str, default='STL10',
+                    choices=['CIFAR10', 'STL10'],
                     help='train dataset name')
-parser.add_argument('--testset', type=str, default='kodak',
-                    choices=['kodak', 'CLIC21', 'CIFAR10', 'STL10'],
-                    help='specify the testset for HR models')
+parser.add_argument('--testset', type=str, default='STL10',
+                    choices=['CIFAR10', 'STL10'],
+                    help='test dataset name')
 parser.add_argument('--distortion-metric', type=str
                     , default='MSE',
                     choices=['MSE', 'MS-SSIM'],
@@ -60,22 +59,19 @@ def conv_relu(in_channels, out_channels, kernel, stride=1, padding=0):
 class inception(nn.Module):
     def __init__(self, in_channel, out1_1, out2_1, out2_3, out3_1, out3_5, out4_1):
         super(inception, self).__init__()
-        # 第一条线路
+
         self.branch1x1 = conv_relu(in_channel, out1_1, 1)
 
-        # 第二条线路
         self.branch3x3 = nn.Sequential(
             conv_relu(in_channel, out2_1, 1),
             conv_relu(out2_1, out2_3, 3, padding=1)
         )
 
-        # 第三条线路
         self.branch5x5 = nn.Sequential(
             conv_relu(in_channel, out3_1, 1),
             conv_relu(out3_1, out3_5, 5, padding=2)
         )
 
-        # 第四条线路
         self.branch_pool = nn.Sequential(
             nn.MaxPool2d(3, stride=1, padding=1),
             conv_relu(in_channel, out4_1, 1)
@@ -197,7 +193,7 @@ class config():
         # CBsize = 32 # 10, 16, 32, 64
         save_model_freq = 10  # save model epoch and results
 
-        image_dims = (3, 256, 256)  # 直接调成256*256，算的时候用96*96算压缩率，这样post出来好看，分类的时候我再降采样到96*96就好了（好像也得用256*256来算）
+        image_dims = (3, 256, 256)
         # image_dims = (3, 96, 96)
         train_data_dir = "./media/Dataset/CIFAR10/"
         test_data_dir = "./media/Dataset/CIFAR10/"
@@ -217,28 +213,6 @@ class config():
             norm_layer=nn.LayerNorm, patch_norm=True,
         )
 
-    elif args.trainset == 'DIV2K':
-        save_model_freq = 100
-        image_dims = (3, 256, 256)
-        train_data_dir = ["/media/Dataset/HR_Image_dataset/"]
-        if args.testset == 'kodak':
-            test_data_dir = ["/media/Dataset/kodak_test/"]
-        elif args.testset == 'CLIC21':
-            test_data_dir = ["/media/Dataset/CLIC21/"]
-        batch_size = 16
-        downsample = 4
-        encoder_kwargs = dict(
-            img_size=(image_dims[1], image_dims[2]), patch_size=2, in_chans=3,
-            embed_dims=[128, 192, 256, 320], depths=[2, 2, 6, 2], num_heads=[4, 6, 8, 10],
-            C=args.C, window_size=8, mlp_ratio=4., qkv_bias=True, qk_scale=None,
-            norm_layer=nn.LayerNorm, patch_norm=True,
-        )
-        decoder_kwargs = dict(
-            img_size=(image_dims[1], image_dims[2]),
-            embed_dims=[320, 256, 192, 128], depths=[2, 6, 2, 2], num_heads=[10, 8, 6, 4],
-            C=args.C, window_size=8, mlp_ratio=4., qkv_bias=True, qk_scale=None,
-            norm_layer=nn.LayerNorm, patch_norm=True,
-        )
 
 
 if args.trainset == 'CIFAR10':
@@ -253,7 +227,6 @@ def load_weights(model_path):
 
 def downsampling(input, out_size):
     downsampled_data = torch.nn.functional.interpolate(input,size=(out_size, out_size),mode='bilinear')
-    # downsampled_data = torch.nn.functional.interpolate(input,size=(out_size, out_size),mode='bicubic')
     return downsampled_data
 
 
@@ -275,9 +248,9 @@ def train_one_epoch(args, lambda_loss_local, H_fading_all):
             input = input.cuda()
             label = label.cuda()
 
-            # search for the codeword (这里search也不只是MSE，如果其中一项置零了就是MSE)
+            # search for the codeword 
             code_assist = input.clone() 
-            code_index = []  # 统计每个数据样本对应的码字W
+            code_index = []
             for image_ID in range(input.size()[0]):
                 code_index_local = 0
                 mse_ini = 10 ** 8
@@ -294,7 +267,7 @@ def train_one_epoch(args, lambda_loss_local, H_fading_all):
             recon_image, CBR, SNR, mse, loss_G, loss_P = net(input, code_assist, code_index, H_fading)  # loss_G is the loss for generating image
 
             # loss_G = loss_G + config.alpha * loss_P
-            loss = (loss_G - lambda_loss_local * loss_P).clone()  # 做归一化防止出现负数的loss
+            loss = (loss_G - lambda_loss_local * loss_P).clone()
 
             if math.isnan(loss.item()):
                 print('Loss error! Please choose another lambda!')
@@ -353,7 +326,7 @@ def train_one_epoch(args, lambda_loss_local, H_fading_all):
                     recon_image = downsampling(recon_image, 512)
                     # recon_image0 = downsampling(input, 512)
                     for iii in range(input.size()[0]):
-                        # save_image(recon_image0[iii], ('./image_raw/img%d_epoch%d_batch%d_snr%d.png' % (iii, epoch, batch_idx, snr))) 
+                        # save_image(recon_image0[iii], ('./image_raw/img%d_epoch%d_batch%d_snr%d.png' % (iii, epoch, batch_idx, snr)))  # save the raw images
                         if args.channel_type == 'awgn':
                             save_image(recon_image[iii], ('./image_recover_SC_loss/img%d_epoch%d_batch%d_snr%d.png' % (iii, epoch, batch_idx, snr)))
                         else:
@@ -384,47 +357,6 @@ def train_one_epoch(args, lambda_loss_local, H_fading_all):
                     train_PSNR_all.append(psnrs.avg)
                     val_SSIM_all.append(msssims.val)
                     train_SSIM_all.append(msssims.avg)
-    
-    else:
-        for batch_idx, input in enumerate(train_loader):
-            start_time = time.time()
-            global_step += 1
-            input = input.cuda()
-            recon_image, CBR, SNR, mse, loss_G = net(input)
-            loss = loss_G
-            optimizer.zero_grad()
-            loss.backward()
-            optimizer.step()
-            elapsed.update(time.time() - start_time)
-            losses.update(loss.item())
-            cbrs.update(CBR)
-            snrs.update(SNR)
-            if mse.item() > 0:
-                psnr = 10 * (torch.log(255. * 255. / mse) / np.log(10))
-                psnrs.update(psnr.item())
-                msssim = 1 - loss_G
-                msssims.update(msssim)
-
-            else:
-                psnrs.update(100)
-                msssims.update(100)
-
-            if (global_step % config.print_step) == 0:
-                process = (global_step % train_loader.__len__()) / (train_loader.__len__()) * 100.0
-                log = (' | '.join([
-                    f'Epoch {epoch}',
-                    f'Step [{global_step % train_loader.__len__()}/{train_loader.__len__()}={process:.2f}%]',
-                    f'Time {elapsed.val:.3f}',
-                    f'Loss {losses.val:.3f} ({losses.avg:.3f})',
-                    f'CBR {cbrs.val:.4f} ({cbrs.avg:.4f})',
-                    f'SNR {snrs.val:.1f} ({snrs.avg:.1f})',
-                    f'PSNR {psnrs.val:.3f} ({psnrs.avg:.3f})',
-                    f'MSSSIM {msssims.val:.3f} ({msssims.avg:.3f})',
-                    f'Lr {cur_lr}',
-                ]))
-                logger.info(log)
-                for i in metrics:
-                    i.clear()
 
     for i in metrics:
         i.clear()
@@ -455,9 +387,8 @@ def test(H_fading_all):
                     H_fading = H_fading_all[H_id]  
 
                     # search for the codeword
-                    code_assist = input.clone()  # 数据量尺寸整整一倍+码本大小
-                    # code_index_distribution = np.zeros(codebook.size()[0])  # 统计W的概率
-                    code_index = []  # 统计每个数据样本对应的码字W
+                    code_assist = input.clone() 
+                    code_index = [] 
                     for image_ID in range(input.size()[0]):
                         code_index_local = 0
                         mse_ini = 10 ** 8
@@ -467,7 +398,6 @@ def test(H_fading_all):
                                 code_assist[image_ID] = codebook[assist_ID].clone()
                                 code_index_local = assist_ID
                                 mse_ini = mse_local
-                        # print('code_index_local', code_index_local)
                         code_index.append(code_index_local)
 
                     code_index = torch.from_numpy(np.array(code_index)).cuda()
@@ -507,32 +437,6 @@ def test(H_fading_all):
                     ]))
                     # logger.info(log)  # print the print of the info
 
-            else:
-                for batch_idx, input in enumerate(test_loader):
-                    start_time = time.time()
-                    input = input.cuda()
-                    recon_image, CBR, SNR, mse, loss_G = net(input, SNR)
-                    elapsed.update(time.time() - start_time)
-                    cbrs.update(CBR)
-                    snrs.update(SNR)
-                    if mse.item() > 0:
-                        psnr = 10 * (torch.log(255. * 255. / mse) / np.log(10))
-                        psnrs.update(psnr.item())
-                        msssim = 1 - CalcuSSIM(input, recon_image.clamp(0., 1.)).mean().item()
-                        msssims.update(msssim)
-                    else:
-                        psnrs.update(100)
-                        msssims.update(100)
-
-                    log = (' | '.join([
-                        f'Time {elapsed.val:.3f}',
-                        f'CBR {cbrs.val:.4f} ({cbrs.avg:.4f})',
-                        f'SNR {snrs.val:.1f}',
-                        f'PSNR {psnrs.val:.3f} ({psnrs.avg:.3f})',
-                        f'MSSSIM {msssims.val:.3f} ({msssims.avg:.3f})',
-                        f'Lr {cur_lr}',
-                    ]))
-                    logger.info(log)   
         results_snr[i] = snrs.avg
         results_cbr[i] = cbrs.avg
         results_psnr[i] = psnrs.avg
@@ -599,7 +503,6 @@ if __name__ == '__main__':
     classifier.load_state_dict(torch.load('google_net.pkl'))
     classifier.cuda()
 
-    # optimizer_classifier = torch.optim.SGD(classifier.parameters(), lr=0.00001)  # fine-tune the classifier, the learning rate should be very small
     optimizer_classifier = torch.optim.SGD(classifier.parameters(), lr=0.0001)  # fine-tune the classifier, the learning rate should be very small
 
     train_PSNR_all = []
@@ -615,7 +518,6 @@ if __name__ == '__main__':
 
     net = net.cuda()
     model_params = [{'params': net.parameters(), 'lr': 0.0001}]
-    # model_params = [{'params': net.parameters(), 'lr': 0.0005}]  # the higher learning rate, the smaller epoch
     train_loader, test_loader = get_loader(args, config)
     cur_lr = config.learning_rate
     optimizer = optim.Adam(model_params, lr=cur_lr)

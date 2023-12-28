@@ -31,22 +31,19 @@ def conv_relu(in_channels, out_channels, kernel, stride=1, padding=0):
 class inception(nn.Module):
     def __init__(self, in_channel, out1_1, out2_1, out2_3, out3_1, out3_5, out4_1):
         super(inception, self).__init__()
-        # 第一条线路
+
         self.branch1x1 = conv_relu(in_channel, out1_1, 1)
 
-        # 第二条线路
         self.branch3x3 = nn.Sequential(
             conv_relu(in_channel, out2_1, 1),
             conv_relu(out2_1, out2_3, 3, padding=1)
         )
 
-        # 第三条线路
         self.branch5x5 = nn.Sequential(
             conv_relu(in_channel, out3_1, 1),
             conv_relu(out3_1, out3_5, 5, padding=2)
         )
 
-        # 第四条线路
         self.branch_pool = nn.Sequential(
             nn.MaxPool2d(3, stride=1, padding=1),
             conv_relu(in_channel, out4_1, 1)
@@ -128,39 +125,20 @@ def data_tf(x):
 def get_loader(config):
     """Builds and returns Dataloader for MNIST and SVHN dataset."""
 
-    # transform = transforms.Compose([
-    #     transforms.Scale(config.image_size),
-    #     transforms.ToTensor(),
-    #     transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
-
-    # cifar = datasets.CIFAR10(root=config.cifar_path, download=True, transform=transform)
-    # stl = datasets.STL10(root=config.stl_path, download=True, transform=transform)
-
     train_set = datasets.STL10(root=config.stl_path, transform=data_tf, download=True)
     train_loader = torch.utils.data.DataLoader(train_set, batch_size=64, shuffle=True)
     test_set = datasets.STL10(root=config.stl_path, transform=data_tf, download=True)
     test_loader = torch.utils.data.DataLoader(test_set, batch_size=32, shuffle=False)
-
-    # stl = datasets.STL10(root=config.stl_path, download=True, transform=data_tf)
-
-    # stl_loader = torch.utils.data.DataLoader(dataset=stl,
-    #                                            batch_size=config.batch_size,
-    #                                            shuffle=True,
-    #                                            num_workers=config.num_workers)
-
-    
 
     return train_loader, test_loader
 
 
 def downsampling(input, out_size):
     downsampled_data = torch.nn.functional.interpolate(input,size=(out_size, out_size),mode='bilinear')
-    # downsampled_data = torch.nn.functional.interpolate(input,size=(out_size, out_size),mode='bicubic')
     return downsampled_data
 
 
 if __name__ == '__main__':
-    # total number of samples equals epoch_len * (CBsize - 1) * iteration_interval + CBsize
 
     CBsize = 10  # codebook size, 10 16 32 64  
     lambda_loss = 10  # lambda in loss, 0.1 1 10 100
@@ -174,7 +152,7 @@ if __name__ == '__main__':
     codebook = None
     distance_measure1 = nn.MSELoss()
     distance_measure2 = nn.CrossEntropyLoss()
-    # distance_measure2 = nn.CrossEntropyLoss(ignore_index=-100)
+
     counter = np.ones(CBsize)
     iteration_interval = 10
 

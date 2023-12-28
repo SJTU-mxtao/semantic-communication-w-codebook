@@ -20,25 +20,18 @@ warnings.filterwarnings("ignore")
 
 def downsampling(input, out_size):
     downsampled_data = torch.nn.functional.interpolate(input,size=(out_size, out_size),mode='bilinear')
-    # downsampled_data = torch.nn.functional.interpolate(input,size=(out_size, out_size),mode='bicubic')
     return downsampled_data
 
 
 def data_tf(x):
-    # x <class 'PIL.Image.Image'>
-    # x (32, 32, 3)
     x = x.resize((96, 96), 2) 
     x = np.array(x, dtype='float32') / 255
-    # print('shape of x:', np.shape(x))
-    # x = (x - 0.5) / 0.5
     x = x.transpose((2, 0, 1))
     x = torch.from_numpy(x)
     return x
 
 
 if __name__ == '__main__':
-    # total number of samples equals epoch_len * (CBsize - 1) * iteration_interval + CBsize
-
     CBsize = 64  # codebook size, 8 16 32 64
 
     torch.manual_seed(1024)

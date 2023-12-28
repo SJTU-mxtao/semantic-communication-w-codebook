@@ -12,19 +12,17 @@ from loss.distortion import *
 import time
 import pdb
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
-# os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
 import numpy as np
-# import imageio
 
 parser = argparse.ArgumentParser(description='WITT')
 parser.add_argument('--training', action='store_true',
                     help='training or testing')
-parser.add_argument('--trainset', type=str, default='CIFAR10',
-                    choices=['CIFAR10', 'DIV2K', 'STL10'],
+parser.add_argument('--trainset', type=str, default='STL10',
+                    choices=['CIFAR10', 'STL10'],
                     help='train dataset name')
-parser.add_argument('--testset', type=str, default='kodak',
-                    choices=['kodak', 'CLIC21', 'CIFAR10', 'STL10'],
-                    help='specify the testset for HR models')
+parser.add_argument('--testset', type=str, default='STL10',
+                    choices=['CIFAR10', 'STL10'],
+                    help='test dataset name')
 parser.add_argument('--distortion-metric', type=str, default='MSE',
                     choices=['MSE', 'MS-SSIM'],
                     help='evaluation metrics')
@@ -54,22 +52,19 @@ def conv_relu(in_channels, out_channels, kernel, stride=1, padding=0):
 class inception(nn.Module):
     def __init__(self, in_channel, out1_1, out2_1, out2_3, out3_1, out3_5, out4_1):
         super(inception, self).__init__()
-        # 第一条线路
+
         self.branch1x1 = conv_relu(in_channel, out1_1, 1)
 
-        # 第二条线路
         self.branch3x3 = nn.Sequential(
             conv_relu(in_channel, out2_1, 1),
             conv_relu(out2_1, out2_3, 3, padding=1)
         )
 
-        # 第三条线路
         self.branch5x5 = nn.Sequential(
             conv_relu(in_channel, out3_1, 1),
             conv_relu(out3_1, out3_5, 5, padding=2)
         )
 
-        # 第四条线路
         self.branch_pool = nn.Sequential(
             nn.MaxPool2d(3, stride=1, padding=1),
             conv_relu(in_channel, out4_1, 1)
@@ -209,29 +204,6 @@ class config():
             norm_layer=nn.LayerNorm, patch_norm=True,
         )
 
-    elif args.trainset == 'DIV2K':
-        save_model_freq = 100
-        image_dims = (3, 256, 256)
-        train_data_dir = ["/media/Dataset/HR_Image_dataset/"]
-        if args.testset == 'kodak':
-            test_data_dir = ["/media/Dataset/kodak_test/"]
-        elif args.testset == 'CLIC21':
-            test_data_dir = ["/media/Dataset/CLIC21/"]
-        batch_size = 16
-        downsample = 4
-        encoder_kwargs = dict(
-            img_size=(image_dims[1], image_dims[2]), patch_size=2, in_chans=3,
-            embed_dims=[128, 192, 256, 320], depths=[2, 2, 6, 2], num_heads=[4, 6, 8, 10],
-            C=args.C, window_size=8, mlp_ratio=4., qkv_bias=True, qk_scale=None,
-            norm_layer=nn.LayerNorm, patch_norm=True,
-        )
-        decoder_kwargs = dict(
-            img_size=(image_dims[1], image_dims[2]),
-            embed_dims=[320, 256, 192, 128], depths=[2, 6, 2, 2], num_heads=[10, 8, 6, 4],
-            C=args.C, window_size=8, mlp_ratio=4., qkv_bias=True, qk_scale=None,
-            norm_layer=nn.LayerNorm, patch_norm=True,
-        )
-
 
 if args.trainset == 'CIFAR10':
     CalcuSSIM = MS_SSIM(window_size=3, data_range=1., levels=4, channel=3).cuda()
@@ -245,7 +217,6 @@ def load_weights(model_path):
 
 def downsampling(input, out_size):
     downsampled_data = torch.nn.functional.interpolate(input,size=(out_size, out_size),mode='bilinear')
-    # downsampled_data = torch.nn.functional.interpolate(input,size=(out_size, out_size),mode='bicubic')
     return downsampled_data
 
 
@@ -267,18 +238,6 @@ def train_one_epoch(args):
         # search for the codeword
         ID_local = 1
 
-        # WDS distance
-        # for image_ID in range(input.size()[0]):
-        #     mse_ini = 10 ** 8
-        #     for assist_ID in range(codebook.size()[0]):
-        #         recon_image_down  = downsampling(input, 96)  # from 256 * 256 to 96 * 96
-        #         out_class = classifier0(recon_image_down)
-        #         mse_local = MSE_loss(input[image_ID], codebook[assist_ID]) + 10 * CE_loss(out_class, label)
-        #         if mse_local < mse_ini:
-        #             mse_ini = mse_local 
-        #             ID_local = assist_ID
-        #     codeword_ID[image_ID] = codeword_ID[image_ID] * ID_local
-
         # MSE (alpha = 0)
         for image_ID in range(input.size()[0]):
             mse_ini = 10 ** 8
@@ -290,7 +249,7 @@ def train_one_epoch(args):
             codeword_ID[image_ID] = codeword_ID[image_ID] * ID_local
 
         codeword_ID = codeword_ID.long()
-        # print('Selected codeword:', codeword_ID)
+
         downsampled_image  = downsampling(input, 96)  # from 256 * 256 to 96 * 96
         out_class = classifier(downsampled_image)
 
@@ -440,8 +399,7 @@ if __name__ == '__main__':
     classifier0.load_state_dict(torch.load('google_net.pkl'))
     classifier0.cuda()
 
-    # optimizer_classifier = torch.optim.SGD(classifier.parameters(), lr=0.00001)  # fine-tune the classifier, the learning rate should be very small
-    optimizer_classifier = torch.optim.SGD(classifier.parameters(), lr=0.0001)  # fine-tune the classifier, the learning rate should be very small
+    optimizer_classifier = torch.optim.SGD(classifier.parameters(), lr=0.0001)
 
     train_Acc_all = []
     val_Acc_all = []

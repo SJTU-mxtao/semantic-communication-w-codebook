@@ -13,17 +13,16 @@ import time
 import pdb
 os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 import numpy as np
-# import imageio 
 
 parser = argparse.ArgumentParser(description='WITT')
 parser.add_argument('--training', action='store_true',
                     help='training or testing')
-parser.add_argument('--trainset', type=str, default='CIFAR10',
-                    choices=['CIFAR10', 'DIV2K', 'STL10'],
+parser.add_argument('--trainset', type=str, default='STL10',
+                    choices=['CIFAR10', 'STL10'],
                     help='train dataset name')
-parser.add_argument('--testset', type=str, default='kodak',
-                    choices=['kodak', 'CLIC21', 'CIFAR10', 'STL10'],
-                    help='specify the testset for HR models')
+parser.add_argument('--testset', type=str, default='STL10',
+                    choices=['CIFAR10', 'STL10'],
+                    help='test dataset name')
 parser.add_argument('--distortion-metric', type=str, default='MSE',
                     choices=['MSE', 'MS-SSIM'],
                     help='evaluation metrics')
@@ -184,35 +183,12 @@ class config():
     
     elif args.trainset == 'STL10':
         save_model_freq = 10  # save the results
-        image_dims = (3, 256, 256)  # 压缩率也得用256*256来算
+        image_dims = (3, 256, 256)
         # image_dims = (3, 96, 96)
         train_data_dir = "./media/Dataset/CIFAR10/"
         test_data_dir = "./media/Dataset/CIFAR10/"
         # batch_size = 128 
         batch_size = 12
-        downsample = 4
-        encoder_kwargs = dict(
-            img_size=(image_dims[1], image_dims[2]), patch_size=2, in_chans=3,
-            embed_dims=[128, 192, 256, 320], depths=[2, 2, 6, 2], num_heads=[4, 6, 8, 10],
-            C=args.C, window_size=8, mlp_ratio=4., qkv_bias=True, qk_scale=None,
-            norm_layer=nn.LayerNorm, patch_norm=True,
-        )
-        decoder_kwargs = dict(
-            img_size=(image_dims[1], image_dims[2]),
-            embed_dims=[320, 256, 192, 128], depths=[2, 6, 2, 2], num_heads=[10, 8, 6, 4],
-            C=args.C, window_size=8, mlp_ratio=4., qkv_bias=True, qk_scale=None,
-            norm_layer=nn.LayerNorm, patch_norm=True,
-        )
-
-    elif args.trainset == 'DIV2K':
-        save_model_freq = 100
-        image_dims = (3, 256, 256)
-        train_data_dir = ["/media/Dataset/HR_Image_dataset/"]
-        if args.testset == 'kodak':
-            test_data_dir = ["/media/Dataset/kodak_test/"]
-        elif args.testset == 'CLIC21':
-            test_data_dir = ["/media/Dataset/CLIC21/"]
-        batch_size = 16
         downsample = 4
         encoder_kwargs = dict(
             img_size=(image_dims[1], image_dims[2]), patch_size=2, in_chans=3,
@@ -240,7 +216,6 @@ def load_weights(model_path):
 
 def downsampling(input, out_size):
     downsampled_data = torch.nn.functional.interpolate(input,size=(out_size, out_size),mode='bilinear')
-    # downsampled_data = torch.nn.functional.interpolate(input,size=(out_size, out_size),mode='bicubic')
     return downsampled_data
 
 
@@ -250,7 +225,7 @@ def train_one_epoch(args, H_fading_all):
     metrics = [elapsed, losses, psnrs, msssims, cbrs, snrs, accs]
     global global_step
     if args.trainset == 'CIFAR10' or args.trainset == 'STL10':
-        for batch_idx, (input, label) in enumerate(train_loader):  # 好像两者唯一不同是一个有label一个无label
+        for batch_idx, (input, label) in enumerate(train_loader): 
             H_id = int(epoch * batch_idx) % 19999
             H_fading = H_fading_all[H_id]
             start_time = time.time()
@@ -266,7 +241,6 @@ def train_one_epoch(args, H_fading_all):
             recon_image_down  = downsampling(recon_image, 96)  # from 256 * 256 to 96 * 96
             out_class = classifier(recon_image_down)
             loss_C = CE_loss(out_class, label)  # loss_C is the loss for classification
-            # pdb.set_trace()
 
             _, pred = out_class.max(1)
             num_correct = (pred == label).sum().item()
@@ -340,47 +314,6 @@ def train_one_epoch(args, H_fading_all):
                     train_PSNR_all.append(psnrs.avg)
                     val_SSIM_all.append(msssims.val)
                     train_SSIM_all.append(msssims.avg)
-    
-    else:
-        for batch_idx, input in enumerate(train_loader):
-            start_time = time.time()
-            global_step += 1
-            input = input.cuda()
-            recon_image, CBR, SNR, mse, loss_G = net(input)
-            loss = loss_G
-            optimizer.zero_grad()
-            loss.backward()
-            optimizer.step()
-            elapsed.update(time.time() - start_time)
-            losses.update(loss.item())
-            cbrs.update(CBR)
-            snrs.update(SNR)
-            if mse.item() > 0:
-                psnr = 10 * (torch.log(255. * 255. / mse) / np.log(10))
-                psnrs.update(psnr.item())
-                msssim = 1 - loss_G
-                msssims.update(msssim)
-
-            else:
-                psnrs.update(100)
-                msssims.update(100)
-
-            if (global_step % config.print_step) == 0:
-                process = (global_step % train_loader.__len__()) / (train_loader.__len__()) * 100.0
-                log = (' | '.join([
-                    f'Epoch {epoch}',
-                    f'Step [{global_step % train_loader.__len__()}/{train_loader.__len__()}={process:.2f}%]',
-                    f'Time {elapsed.val:.3f}',
-                    f'Loss {losses.val:.3f} ({losses.avg:.3f})',
-                    f'CBR {cbrs.val:.4f} ({cbrs.avg:.4f})',
-                    f'SNR {snrs.val:.1f} ({snrs.avg:.1f})',
-                    f'PSNR {psnrs.val:.3f} ({psnrs.avg:.3f})',
-                    f'MSSSIM {msssims.val:.3f} ({msssims.avg:.3f})',
-                    f'Lr {cur_lr}',
-                ]))
-                logger.info(log)
-                for i in metrics:
-                    i.clear()
 
     for i in metrics:
         i.clear()
@@ -443,32 +376,6 @@ def test(H_fading_all):
                     ]))
                     # logger.info(log)
 
-            else:
-                for batch_idx, input in enumerate(test_loader):
-                    start_time = time.time()
-                    input = input.cuda()
-                    recon_image, CBR, SNR, mse, loss_G = net(input, SNR)
-                    elapsed.update(time.time() - start_time)
-                    cbrs.update(CBR)
-                    snrs.update(SNR)
-                    if mse.item() > 0:
-                        psnr = 10 * (torch.log(255. * 255. / mse) / np.log(10))
-                        psnrs.update(psnr.item())
-                        msssim = 1 - CalcuSSIM(input, recon_image.clamp(0., 1.)).mean().item()
-                        msssims.update(msssim)
-                    else:
-                        psnrs.update(100)
-                        msssims.update(100)
-
-                    log = (' | '.join([
-                        f'Time {elapsed.val:.3f}',
-                        f'CBR {cbrs.val:.4f} ({cbrs.avg:.4f})',
-                        f'SNR {snrs.val:.1f}',
-                        f'PSNR {psnrs.val:.3f} ({psnrs.avg:.3f})',
-                        f'MSSSIM {msssims.val:.3f} ({msssims.avg:.3f})',
-                        f'Lr {cur_lr}',
-                    ]))
-                    logger.info(log)
         results_snr[i] = snrs.avg
         results_cbr[i] = cbrs.avg
         results_psnr[i] = psnrs.avg
@@ -529,7 +436,6 @@ if __name__ == '__main__':
     classifier.load_state_dict(torch.load('google_net.pkl'))
     classifier.cuda()
 
-    # optimizer_classifier = torch.optim.SGD(classifier.parameters(), lr=0.00001)  # fine-tune the classifier, the learning rate should be very small
     optimizer_classifier = torch.optim.SGD(classifier.parameters(), lr=0.0001)  # fine-tune the classifier, the learning rate should be very small
 
     train_PSNR_all = []
@@ -545,7 +451,7 @@ if __name__ == '__main__':
 
     net = net.cuda()
     model_params = [{'params': net.parameters(), 'lr': 0.0001}]
-    # model_params = [{'params': net.parameters(), 'lr': 0.0005}]  # the higher learning rate, the smaller epoch
+
     train_loader, test_loader = get_loader(args, config)
     cur_lr = config.learning_rate
     optimizer = optim.Adam(model_params, lr=cur_lr)

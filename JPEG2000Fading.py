@@ -1,7 +1,6 @@
 from pickletools import uint8
 from turtle import Turtle
 import cv2
-import glymur
 
 import numpy as np
 import argparse
@@ -24,12 +23,12 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 parser = argparse.ArgumentParser(description='WITT')
 parser.add_argument('--training', action='store_true',
                     help='training or testing')
-parser.add_argument('--trainset', type=str, default='CIFAR10',
-                    choices=['CIFAR10', 'DIV2K', 'STL10'],
+parser.add_argument('--trainset', type=str, default='STL10',
+                    choices=['CIFAR10', 'STL10'],
                     help='train dataset name')
-parser.add_argument('--testset', type=str, default='kodak',
-                    choices=['kodak', 'CLIC21', 'CIFAR10', 'STL10'],
-                    help='specify the testset for HR models')
+parser.add_argument('--testset', type=str, default='STL10',
+                    choices=['CIFAR10', 'STL10'],
+                    help='test dataset name')
 parser.add_argument('--distortion-metric', type=str, default='MSE',
                     choices=['MSE', 'MS-SSIM'],
                     help='evaluation metrics')
@@ -61,22 +60,19 @@ def conv_relu(in_channels, out_channels, kernel, stride=1, padding=0):
 class inception(nn.Module):
     def __init__(self, in_channel, out1_1, out2_1, out2_3, out3_1, out3_5, out4_1):
         super(inception, self).__init__()
-        # 第一条线路
+
         self.branch1x1 = conv_relu(in_channel, out1_1, 1)
 
-        # 第二条线路
         self.branch3x3 = nn.Sequential(
             conv_relu(in_channel, out2_1, 1),
             conv_relu(out2_1, out2_3, 3, padding=1)
         )
 
-        # 第三条线路
         self.branch5x5 = nn.Sequential(
             conv_relu(in_channel, out3_1, 1),
             conv_relu(out3_1, out3_5, 5, padding=2)
         )
 
-        # 第四条线路
         self.branch_pool = nn.Sequential(
             nn.MaxPool2d(3, stride=1, padding=1),
             conv_relu(in_channel, out4_1, 1)
@@ -176,8 +172,7 @@ class config():
     CBsize = 64 # 8, 16, 32, 64
     save_model_freq = 10  # save model epoch and results
 
-    image_dims = (3, 256, 256)  # 直接调成256*256，算的时候用96*96算压缩率，这样post出来好看，分类的时候我再降采样到96*96就好了（好像也得用256*256来算）
-    # image_dims = (3, 96, 96)
+    image_dims = (3, 256, 256)
     train_data_dir = "./media/Dataset/CIFAR10/"
     test_data_dir = "./media/Dataset/CIFAR10/"
     # batch_size = 128 
@@ -204,11 +199,10 @@ else:
 
 def downsampling(input, out_size):
     downsampled_data = torch.nn.functional.interpolate(input,size=(out_size, out_size),mode='bilinear')
-    # downsampled_data = torch.nn.functional.interpolate(input,size=(out_size, out_size),mode='bicubic')
     return downsampled_data
 
 
-def test(H_fading_all):
+def test():
     config.isTrain = False
     elapsed, losses, psnrs, msssims, cbrs, snrs, accs = [AverageMeter() for _ in range(7)]
     metrics = [elapsed, losses, psnrs, msssims, cbrs, snrs, accs]
@@ -278,7 +272,6 @@ def test(H_fading_all):
         # optimizer_classifier.step()
 
         elapsed.update(time.time() - start_time)
-        # losses.update(loss_C.item())
         if mse.item() > 0:
             psnr = 10 * (torch.log(1. / mse) / np.log(10))
             psnrs.update(psnr.item())
@@ -328,11 +321,14 @@ if __name__ == '__main__':
     logger.info(config.__dict__)
     torch.manual_seed(seed=config.seed)
 
-    CR_ini = np.array([1, 2, 3, 4, 5]) / 100  # %, CR of other methods
-    # CR_ini = np.array([4, 4, 4, 4]) / 100  # %, CR of other methods
-
+    # JPEG2000 v.s. different CRs
+    CR_ini = np.array([1, 2, 3, 4, 5]) / 100  
     SNR_dB = np.array([10, 10, 10, 10, 10])
+
+    # JPEG2000 v.s. different SNRs
+    # CR_ini = np.array([4, 4, 4, 4]) / 100 
     # SNR_dB = np.array([2, 4, 6, 8])
+
     SNR = 10 ** (SNR_dB / 10)
 
     CR = CR_ini / 8
@@ -351,7 +347,6 @@ if __name__ == '__main__':
     test_Acc_all = []
     test_SSIM_all = []
 
-    # model_params = [{'params': net.parameters(), 'lr': 0.0005}]  # the higher learning rate, the smaller epoch
     train_loader, test_loader = get_loader(args, config)
     del test_loader
 
@@ -361,7 +356,6 @@ if __name__ == '__main__':
         H_fading_all = np.ones(20000)
     else:
         H_fading_all = np.sqrt(2 / np.pi) *  np.random.rayleigh(1, 20000)  # generate the fading coefficient
-        # H_fading_all = 10 * np.log10(H_fading_all + 10 ** (-10))
 
     for cr in range(np.shape(CR)[0]):
         CR_local = CR[cr]
@@ -380,7 +374,7 @@ if __name__ == '__main__':
         steps_epoch = global_step // train_loader.__len__()
         for epoch in range(20): 
 
-            test(H_fading_all)
+            test()
 
             np_test_PSNR_all = np.array(test_PSNR_all)
             np_test_Acc_all = np.array(test_Acc_all)

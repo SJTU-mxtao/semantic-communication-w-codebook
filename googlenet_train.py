@@ -30,22 +30,18 @@ def conv_relu(in_channels, out_channels, kernel, stride=1, padding=0):
 class inception(nn.Module):
     def __init__(self, in_channel, out1_1, out2_1, out2_3, out3_1, out3_5, out4_1):
         super(inception, self).__init__()
-        # 第一条线路
         self.branch1x1 = conv_relu(in_channel, out1_1, 1)
 
-        # 第二条线路
         self.branch3x3 = nn.Sequential(
             conv_relu(in_channel, out2_1, 1),
             conv_relu(out2_1, out2_3, 3, padding=1)
         )
 
-        # 第三条线路
         self.branch5x5 = nn.Sequential(
             conv_relu(in_channel, out3_1, 1),
             conv_relu(out3_1, out3_5, 5, padding=2)
         )
 
-        # 第四条线路
         self.branch_pool = nn.Sequential(
             nn.MaxPool2d(3, stride=1, padding=1),
             conv_relu(in_channel, out4_1, 1)
@@ -116,19 +112,12 @@ class GoogLeNet(nn.Module):
         x = self.classifier(x)
         return x
 
-# test_net = GoogLeNet()
-# test_x = Variable(torch.zeros(1, 3, 96, 96))
-# test_y = test_net(test_x)
-# print('output: {}'.format(test_y.shape))
-
 
 def data_tf(x):
-    # x <class 'PIL.Image.Image'>
-    # x (32, 32, 3)
-    x = x.resize((96, 96), 2)  # 将图片放大到96*96 shape of x: (96, 96, 3)
+    x = x.resize((96, 96), 2)  
     x = np.array(x, dtype='float32') / 255
     # x = (x - 0.5) / 0.5
-    x = x.transpose((2, 0, 1))  ## 将 channel 放到第一维，只是 pytorch 要求的输入方式
+    x = x.transpose((2, 0, 1)) 
     x = torch.from_numpy(x)
     return x
 
@@ -136,26 +125,10 @@ def data_tf(x):
 def get_loader(config):
     """Builds and returns Dataloader for MNIST and SVHN dataset."""
 
-    # transform = transforms.Compose([
-    #     transforms.Scale(config.image_size),
-    #     transforms.ToTensor(),
-    #     transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
-
-    # cifar = datasets.CIFAR10(root=config.cifar_path, download=True, transform=transform)
-    # stl = datasets.STL10(root=config.stl_path, download=True, transform=transform)
-
     train_set = datasets.STL10(root=config.stl_path, transform=data_tf, download=True)
     train_loader = torch.utils.data.DataLoader(train_set, batch_size=64, shuffle=True)
     test_set = datasets.STL10(root=config.stl_path, transform=data_tf, download=True)
     test_loader = torch.utils.data.DataLoader(test_set, batch_size=32, shuffle=False)
-
-    # stl = datasets.STL10(root=config.stl_path, download=True, transform=data_tf)
-
-    # stl_loader = torch.utils.data.DataLoader(dataset=stl,
-    #                                            batch_size=config.batch_size,
-    #                                            shuffle=True,
-    #                                            num_workers=config.num_workers)
-
     
 
     return train_loader, test_loader
@@ -180,7 +153,6 @@ def train(net, train_data, valid_data, num_epochs, criterion):
         net = net.train()
 
         # adaptive learning rate
-        # 学习率好像有点儿太大了。。。
         if epoch < 20:
             optimizer = torch.optim.SGD(net.parameters(), lr=0.02)
         elif epoch < 40:
@@ -229,11 +201,6 @@ def train(net, train_data, valid_data, num_epochs, criterion):
                     label = Variable(label, volatile=True)
                 output = net(im)
                 loss = criterion(output, label)
-
-                # # backward
-                # optimizer.zero_grad()
-                # loss.backward()
-                # optimizer.step()
 
                 valid_loss += loss.item()
                 valid_acc += get_acc(output, label)

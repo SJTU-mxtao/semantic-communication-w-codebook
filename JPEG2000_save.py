@@ -22,14 +22,13 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 def downsampling(input, out_size):
     downsampled_data = torch.nn.functional.interpolate(input,size=(out_size, out_size),mode='bilinear')
-    # downsampled_data = torch.nn.functional.interpolate(input,size=(out_size, out_size),mode='bicubic')
     return downsampled_data
 
 
 if __name__ == '__main__':
     warnings.filterwarnings("ignore")
 
-    CR_ini = 4 / 100  # %, CR of other methods
+    CR_ini = 4 / 100  # CR of other methods
 
     SNR_dB = 4
     SNR = 10 ** (SNR_dB / 10)
