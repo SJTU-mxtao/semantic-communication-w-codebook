@@ -1,1 +1,0 @@
-models for STL10 over the rayleigh channel
