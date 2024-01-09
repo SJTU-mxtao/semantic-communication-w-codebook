@@ -60,12 +60,12 @@ $ python googlenet_train.py
 * PSC: trainSC_LossFading.py
 
 ```bash
-$ python {trainCBFading.py/trainSCFading.py/trainLSC_LossFading.py/trainSC_LossFading.py} --training --trainset STL10 --testset STL10 -- distortion-metric {MSE/MS-SSIM} --model {'WITT'/'WITT_W/O'} --channel-type {awgn/rayleigh} --C {4/8/12/16/20} --multiple-snr {2/4/6/8/10} --seed seed --SCsize {16, 32, 64}
+$ python {trainCBFading.py/trainSCFading.py/trainLSC_LossFading.py/trainSC_LossFading.py} --training --trainset STL10 --testset STL10 --distortion-metric {MSE/MS-SSIM} --model {'WITT'/'WITT_W/O'} --channel-type {awgn/rayleigh} --C {4/8/12/16/20} --multiple-snr {2/4/6/8/10} --seed seed --SCsize {16, 32, 64}
 ```
 
 ## SJSCC Method
 ```bash
-$ python trainTSMfading.py --training --trainset STL10 --testset STL10 -- distortion-metric {MSE/MS-SSIM} --model {'WITT'/'WITT_W/O'} --channel-type {awgn/rayleigh} --C {4, 8, 12, 16, 20} --multiple-snr {2, 4, 6, 8, 10} --seed seed
+$ python trainTSMfading.py --training --trainset STL10 --testset STL10 --distortion-metric {MSE/MS-SSIM} --model {'WITT'/'WITT_W/O'} --channel-type {awgn/rayleigh} --C {4, 8, 12, 16, 20} --multiple-snr {2, 4, 6, 8, 10} --seed seed
 ```
 
 ## JCA Method
