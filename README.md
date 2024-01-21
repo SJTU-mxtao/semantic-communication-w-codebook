@@ -36,7 +36,7 @@ To construct a task-aware codebook for the PSC and SCSC methods.
 $ python SC_construction.py
 ```
 
-### Label-Based Semantic-Aware Codebook Construction
+### Label-Based Codebook Construction
 To construct a label-based task-aware codebook for the PLSC methods.
 ```bash
 $ python LSC_construction.py
@@ -58,22 +58,17 @@ $ python googlenet_train.py
 * It is recommended to train the pre-training model on AWGN channels with a high SNR. Then, based on the pre-trained model, train again at other SNRs or over the Rayleigh fading channel to achieve a more stable performance.
 * To obtain performance with different codebooks or at different SNRs, it is only necessary to utilize the codec trained based on one codebook or at one SNR as a pre-trained model, and then fine-tune it to achieve rapid convergence of the semantic codec training.
 
-## SCC, SCSC, PLSC, PSC Methods
-* SCC: trainCBFading.py
-* SCSC: trainSCFading.py
-* PLSC: trainLSC_LossFading.py
-* PSC: trainSC_LossFading.py
+## CB w/o Loss, SAC w/o Loss, LC w Loss, SAC w Loss
+* CB w/o Loss: trainCBFading.py
+* SAC w/o Loss: trainSCFading.py
+* LC w Loss: trainLSC_LossFading.py
+* SAC w Loss: trainSC_LossFading.py
 
 ```bash
-$ python {trainCBFading.py/trainSCFading.py/trainLSC_LossFading.py/trainSC_LossFading.py} --training --trainset STL10 --testset STL10 --distortion-metric {MSE/MS-SSIM} --model {'WITT'/'WITT_W/O'} --channel-type {awgn/rayleigh} --C {4/8/12/16/20} --multiple-snr {2/4/6/8/10} --seed seed --SCsize {16, 32, 64}
+$ python {trainCBFading.py/trainSCFading.py/trainLSC_LossFading.py/trainSC_LossFading.py} --training --trainset STL10 --testset STL10 --distortion-metric {MSE/MS-SSIM} --model {'WITT'/'WITT_W/O'} --channel-type {awgn/rayleigh} --C {4/8/12/16/20} --multiple-snr {2/4/6/8/10} --seed seed --SCsize {10, 32, 64, 128}
 ```
 
-## SJSCC Method
-```bash
-$ python trainTSMfading.py --training --trainset STL10 --testset STL10 --distortion-metric {MSE/MS-SSIM} --model {'WITT'/'WITT_W/O'} --channel-type {awgn/rayleigh} --C {4, 8, 12, 16, 20} --multiple-snr {2, 4, 6, 8, 10} --seed seed
-```
-
-## JCA Method
+## JPEG2000-Based Method
 
 To obtain the performance of the JCA method.
 ```bash
