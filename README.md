@@ -50,8 +50,13 @@ $ python googlenet_train.py
 
 
 # Usage
+
+## PS
 * For the AWGN channel, please choose 'WITT_W/O' and 'awgn'
 * For the Rayleigh fading channel, please select 'WITT' and 'rayleigh'
+* When using the proposed loss function, performance may be erratic in some cases. Therefore, depending on the actual situation, you may need to use a smaller weight value.
+* It is recommended to train the pre-training model on AWGN channels with a high SNR. Then, based on the pre-trained model, train again at other SNRs or over the Rayleigh fading channel to achieve a more stable performance.
+* To obtain performance with different codebooks or at different SNRs, it is only necessary to utilize the codec trained based on one codebook or at one SNR as a pre-trained model, and then fine-tune it to achieve rapid convergence of the semantic codec training.
 
 ## SCC, SCSC, PLSC, PSC Methods
 * SCC: trainCBFading.py
