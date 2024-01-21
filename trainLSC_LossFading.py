@@ -556,7 +556,7 @@ if __name__ == '__main__':
         pre_model_exist = False
     else:
         # use the pre-trained model for fading channel
-        model_path = "./saved_model/awgn/STL10/LSC_loss_snr" + str(snr_ini) + "_psnr_C" + str(args.C) + ".model"
+        model_path = "./saved_model/awgn/STL10/LSC_loss_snr" + str(snr_ini) + "_C" + str(args.C) + ".model"
         pre_model_exist = os.path.isfile(model_path)  # if the pre-trained model exists
         if pre_model_exist:
             load_weights(model_path)
