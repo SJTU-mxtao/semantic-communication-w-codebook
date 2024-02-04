@@ -267,7 +267,7 @@ def train_one_epoch(args, lambda_loss_local, H_fading_all):
             recon_image, CBR, SNR, mse, loss_G, loss_P = net(input, code_assist, code_index, H_fading)  # loss_G is the loss for generating image
 
             # loss_G = loss_G + config.alpha * loss_P
-            loss = (loss_G - lambda_loss_local * loss_P).clone()
+            loss = (loss_G + lambda_loss_local * loss_P).clone()
 
             if math.isnan(loss.item()):
                 print('Loss error! Please choose another lambda!')
