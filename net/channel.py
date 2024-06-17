@@ -68,11 +68,19 @@ class Channel(nn.Module):
                 return channel_tx * torch.sqrt(avg_pwr * 2)
             else:
                 return channel_tx * torch.sqrt(pwr)
+
         elif self.chan_type == 2 or self.chan_type == 'rayleigh':
+            # if avg_pwr:
+            #     return channel_output * torch.sqrt(avg_pwr * 2)
+            # else:
+            #     return channel_output * torch.sqrt(pwr)
+            noise = (channel_output - channel_tx).detach()
+            noise.requires_grad = False
+            channel_tx = channel_tx + noise
             if avg_pwr:
-                return channel_output * torch.sqrt(avg_pwr * 2)
+                return channel_tx * torch.sqrt(avg_pwr * 2)
             else:
-                return channel_output * torch.sqrt(pwr)
+                return channel_tx * torch.sqrt(pwr)
 
     def complex_forward(self, channel_in, chan_param):
         if self.chan_type == 0 or self.chan_type == 'none':
@@ -87,11 +95,17 @@ class Channel(nn.Module):
             return chan_output
 
         elif self.chan_type == 2 or self.chan_type == 'rayleigh':
+            # channel_tx = channel_in
+            # sigma = np.sqrt(1.0 / (2 * 10 ** (chan_param / 10)))
+            # chan_output = self.rayleigh_noise_layer(channel_tx,
+            #                                         std=sigma,
+            #                                         name="rayleigh_chan_noise")
+            # return chan_output
             channel_tx = channel_in
             sigma = np.sqrt(1.0 / (2 * 10 ** (chan_param / 10)))
-            chan_output = self.rayleigh_noise_layer(channel_tx,
+            chan_output = self.gaussian_noise_layer(channel_tx,
                                                     std=sigma,
-                                                    name="rayleigh_chan_noise")
+                                                    name="awgn_chan_noise")
             return chan_output
 
 
