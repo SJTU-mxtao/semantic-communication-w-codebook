@@ -1,6 +1,6 @@
 # Codebook-Assisted Image Semantic Communications with a Wyner-Ziv Coding-Based Loss Function
 
-Pytorch implementation of the [paper](https://xxxx) "Codebook-Assisted Image Semantic Communications with a Wyner-Ziv Coding-Based Loss Function".
+Pytorch implementation of the [paper](https://xxxx) "Improving Learning-Based Semantic Coding Efficiency for Image Transmission via Shared Semantic-Aware Codebook".
 
 # Introduction
 Recently, codebook-assisted semantic communications have been developed to bridge the gap between end-to-end strategies and module-based methods, which have showcased superior performance in data reliability and transmission efficiency. However, most of these approaches encounter two key issues. Firstly, they do not construct the codebook from the semantic perspective, causing a performance decline in semantic information recovery. Secondly, the semantic coder neural network is trained solely on traditional loss functions. Hence, there may be redundancy between the received signal and codeword, which compromises transmission efficiency. In this paper, we tackle the above issues through several key contributions. We first propose a novel approach for constructing a semantic-aware codebook, leveraging an innovative distance measure that unifies the objectives of codebook construction and semantic coding. We also propose a codebook construction method based on classification results, serving as a special version of the proposed method. To further enhance transmission efficiency, we optimize the Swin Transformer-based coder by the proposed Wyner-Ziv coding-based loss function, where a penalty term aims to mitigate the redundancy in the received signals. The performance of the proposed approach is comprehensively validated over both an AWGN channel and a Rayleigh fading channel. Numerical results demonstrate that the proposed method outperforms traditional methods in terms of both semantic information recovery and source data reconstruction.
@@ -68,34 +68,32 @@ $ python googlenet_train.py
 $ python {trainCBFading.py/trainSCFading.py/trainLSC_LossFading.py/trainSC_LossFading.py} --training --trainset STL10 --testset STL10 --distortion-metric {MSE/MS-SSIM} --model {'WITT'/'WITT_W/O'} --channel-type {awgn/rayleigh} --C {4/8/12/16/20} --multiple-snr {2/4/6/8/10} --seed seed --SCsize {10, 32, 64, 128}
 ```
 
-## JPEG2000-Based Method
-
-To obtain the performance of the JCA method.
-```bash
-$ python JPEG2000Fading.py --training --trainset STL10 --testset STL10 --channel-type {awgn/rayleigh} 
-```
-
-To obtain the recovered image for a specific image. Please change the file name of the raw image to 'raw.jpg' or others.
-```bash
-$ python JPEG2000_save.py
-```
-
 # Experimental results
 
-## AWGN channel
+
+## Performance at Different CRs
 
 ![ ](./figure/results_CompressionRate_AWGN.png)
->  Results across the compression rates over the AWGN channel, SNR = 10 dB.
+>  Performance at different CRs over the AWGN channel, where the SNR is 10 dB.
+
+
+![ ](./figure/results_CompressionRate_Rayleigh.png)
+>  Performance at different CRs over the Rayleigh fading channel, where the average SNR is 10 dB.
+
+
+## Performance at Different SNRs
 
 ![ ](./figure/results_SNR_AWGN.png)
->  Results across the SNRs over the AWGN channel, compression rate is 1.03 percent.
+>  Performance at different SNRs over the AWGN channel, where r = 7.40%.
+
+
+![ ](./figure/results_SNR_Rayleigh.png)
+>  Performance at different average SNRs over the Rayleigh fading channel, where r = 7.40%.
+
+## Visualization Results
 
 ![ ](./figure/recovered_awgn.png)
->  Recovered images over the AWGN channel. The compression rate is 1.03 percent and SNR = 6 dB.
-
-
-## Rayleigh channel
-
+>  Illustration of the raw image and reconstructed images over the AWGN channel and the Rayleigh channel, where the SNR is 4 dB, h is the identity matrix, and r = 9.25%.
 
 
 # Citation
@@ -106,6 +104,10 @@ xxxxx
 
 # Acknowledgement
 The implementation is based on [WITT: A Wireless Image Transmission Transformer For Semantic Communication](https://github.com/KeYang8/WITT).
+
+
+# Contact
+Please contact zhanghwei@sjtu.edu.cn if you have any question on the codes.
 
 
 
