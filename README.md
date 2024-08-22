@@ -1,4 +1,4 @@
-# Codebook-Assisted Image Semantic Communications with a Wyner-Ziv Coding-Based Loss Function
+# Codebook-Assisted Image Semantic Communications
 
 Pytorch implementation of the [paper](https://xxxx) "Improving Learning-Based Semantic Coding Efficiency for Image Transmission via Shared Semantic-Aware Codebook".
 
