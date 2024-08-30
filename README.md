@@ -1,6 +1,6 @@
 # Codebook-Assisted Image Semantic Communications
 
-Pytorch implementation of the [paper](https://xxxx) "Improving Learning-Based Semantic Coding Efficiency for Image Transmission via Shared Semantic-Aware Codebook".
+Pytorch implementation of the [paper](https://ieeexplore.ieee.org/document/10654371) "Improving Learning-Based Semantic Coding Efficiency for Image Transmission via Shared Semantic-Aware Codebook".
 
 # Introduction
 Recently, codebook-assisted semantic communications have been developed to bridge the gap between end-to-end strategies and module-based methods, which have showcased superior performance in data reliability and transmission efficiency. However, most of these approaches encounter two key issues. Firstly, they do not construct the codebook from the semantic perspective, causing a performance decline in semantic information recovery. Secondly, the semantic coder neural network is trained solely on traditional loss functions. Hence, there may be redundancy between the received signal and codeword, which compromises transmission efficiency. In this paper, we tackle the above issues through several key contributions. We first propose a novel approach for constructing a semantic-aware codebook, leveraging an innovative distance measure that unifies the objectives of codebook construction and semantic coding. We also propose a codebook construction method based on classification results, serving as a special version of the proposed method. To further enhance transmission efficiency, we optimize the Swin Transformer-based coder by the proposed Wyner-Ziv coding-based loss function, where a penalty term aims to mitigate the redundancy in the received signals. The performance of the proposed approach is comprehensively validated over both an AWGN channel and a Rayleigh fading channel. Numerical results demonstrate that the proposed method outperforms traditional methods in terms of both semantic information recovery and source data reconstruction.
@@ -100,14 +100,26 @@ $ python {trainCBFading.py/trainSCFading.py/trainLSC_LossFading.py/trainSC_LossF
 
 Please use the following BibTeX citation if you use this repository in your work:
 
-xxxxx
+@ARTICLE{10654371,
+  author={Zhang, Hongwei and Tao, Meixia and Sun, Yaping and Letaief, Khaled B.},
+  journal={IEEE Transactions on Communications}, 
+  title={Improving Learning-Based Semantic Coding Efficiency for Image Transmission via Shared Semantic-Aware Codebook}, 
+  year={2024},
+  volume={},
+  number={},
+  pages={1-1},
+  keywords={Semantics;Encoding;Indexes;Transformers;Receivers;Transmitters;Image coding;Semantic communications;codebook construction;variational approximation},
+  doi={10.1109/TCOMM.2024.3450877}}
+
+
+
 
 # Acknowledgement
 The implementation is based on [WITT: A Wireless Image Transmission Transformer For Semantic Communication](https://github.com/KeYang8/WITT).
 
 
 # Contact
-Please contact zhanghwei@sjtu.edu.cn if you have any question on the codes.
+Please contact zhanghwei@sjtu.edu.cn if you have any questions about the codes.
 
 
 
