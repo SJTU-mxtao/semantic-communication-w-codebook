@@ -1,4 +1,4 @@
-# Codebook-Assisted Image Semantic Communications
+# Codebook-Assisted Image Semantic Communications (Swin Transformer-Based Approach)
 
 Pytorch implementation of the [paper](https://ieeexplore.ieee.org/document/10654371) "Improving Learning-Based Semantic Coding Efficiency for Image Transmission via Shared Semantic-Aware Codebook".
 
