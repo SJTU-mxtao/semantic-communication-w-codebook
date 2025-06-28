@@ -100,16 +100,18 @@ $ python {trainCBFading.py/trainSCFading.py/trainLSC_LossFading.py/trainSC_LossF
 
 Please use the following BibTeX citation if you use this repository in your work:
 
+```
 @ARTICLE{10654371,
   author={Zhang, Hongwei and Tao, Meixia and Sun, Yaping and Letaief, Khaled B.},
   journal={IEEE Transactions on Communications}, 
   title={Improving Learning-Based Semantic Coding Efficiency for Image Transmission via Shared Semantic-Aware Codebook}, 
-  year={2024},
-  volume={},
-  number={},
-  pages={1-1},
+  year={2025},
+  volume={73},
+  number={2},
+  pages={1217-1232},
   keywords={Semantics;Encoding;Indexes;Transformers;Receivers;Transmitters;Image coding;Semantic communications;codebook construction;variational approximation},
   doi={10.1109/TCOMM.2024.3450877}}
+```
 
 
 
@@ -119,7 +121,7 @@ The implementation is based on [WITT: A Wireless Image Transmission Transformer 
 
 
 # Contact
-Please contact zhanghwei@sjtu.edu.cn if you have any questions about the codes.
+Please contact zhw_ieee802@163.com if you have any questions about the codes.
 
 
 
